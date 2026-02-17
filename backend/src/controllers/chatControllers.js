@@ -44,8 +44,7 @@ const accessChat = async (req, res) => {
             );
             res.status(200).json(FullChat);
         } catch (error) {
-            res.status(400);
-            throw new Error(error.message);
+            return res.status(400).json({ message: error.message });
         }
     }
 };
@@ -67,8 +66,7 @@ const fetchChats = async (req, res) => {
                 res.status(200).send(results);
             });
     } catch (error) {
-        res.status(400);
-        throw new Error(error.message);
+        return res.status(400).json({ message: error.message });
     }
 };
 
@@ -85,7 +83,7 @@ const createGroupChat = async (req, res) => {
         return res.status(400).send("More than 2 users are required to form a group chat");
     }
 
-    users.push(req.user); // Add the logged-in user to the group
+    users.push(req.user._id); // Add the logged-in user to the group
 
     try {
         const groupChat = await Chat.create({
@@ -101,8 +99,7 @@ const createGroupChat = async (req, res) => {
 
         res.status(200).json(fullGroupChat);
     } catch (error) {
-        res.status(400);
-        throw new Error(error.message);
+        return res.status(400).json({ message: error.message });
     }
 };
 
@@ -120,8 +117,7 @@ const renameGroup = async (req, res) => {
         .populate("groupAdmin", "-password");
 
     if (!updatedChat) {
-        res.status(404);
-        throw new Error("Chat Not Found");
+        return res.status(404).json({ message: "Chat Not Found" });
     } else {
         res.json(updatedChat);
     }
@@ -141,8 +137,7 @@ const addToGroup = async (req, res) => {
         .populate("groupAdmin", "-password");
 
     if (!added) {
-        res.status(404);
-        throw new Error("Chat Not Found");
+        return res.status(404).json({ message: "Chat Not Found" });
     } else {
         res.json(added);
     }
@@ -162,8 +157,7 @@ const removeFromGroup = async (req, res) => {
         .populate("groupAdmin", "-password");
 
     if (!removed) {
-        res.status(404);
-        throw new Error("Chat Not Found");
+        return res.status(404).json({ message: "Chat Not Found" });
     } else {
         res.json(removed);
     }

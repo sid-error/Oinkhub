@@ -43,6 +43,7 @@ io.on("connection", (socket) => {
     // User joins their own private room based on their ID
     socket.on("setup", (userData) => {
         socket.join(userData._id);
+        socket.userData = userData;
         socket.emit("connected");
     });
 
@@ -71,8 +72,8 @@ io.on("connection", (socket) => {
     });
 
     // Cleanup on disconnect
-    socket.off("setup", () => {
+    socket.on("disconnect", () => {
         console.log("USER DISCONNECTED");
-        socket.leave(userData._id);
+        socket.leave(socket.userData._id);
     });
 });

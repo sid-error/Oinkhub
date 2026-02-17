@@ -4,21 +4,21 @@ import { useNavigate } from "react-router-dom";
 const ChatContext = createContext();
 
 const ChatProvider = ({ children }) => {
-    const [user, setUser] = useState();
+    const [user, setUser] = useState(() => {
+        const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+        return userInfo;
+    });
     const [selectedChat, setSelectedChat] = useState();
     const [chats, setChats] = useState([]);
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        const userInfo = JSON.parse(localStorage.getItem("userInfo"));
-        setUser(userInfo);
-
-        // If user is not logged in, redirect to home/login page
-        if (!userInfo) {
+        if (!user) {
             navigate("/");
         }
-    }, [navigate]);
+    }, [navigate, user]);
+
 
     return (
         <ChatContext.Provider
