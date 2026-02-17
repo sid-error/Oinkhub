@@ -39,25 +39,42 @@ const Login = () => {
     try {
       const config = { headers: { "Content-Type": "application/json" } };
 
-      const { data } = await axios.post(
+      const response = await axios.post(
         "/api/user/login",
         { email, password },
         config
       );
 
-      localStorage.setItem("userInfo", JSON.stringify(data));
+      const userData = response.data;
+
+      console.log("LOGIN RESPONSE:", userData);
+
+      localStorage.setItem("userInfo", JSON.stringify(userData));
+
+      toast({
+        title: "Login successful",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+
       setLoading(false);
       navigate("/chats");
     } catch (error) {
+      console.log("LOGIN ERROR:", error);
+      console.log("RESPONSE:", error?.response?.data);
+      console.log("STATUS:", error?.response?.status);
+
       toast({
         title: "Error!",
-        description:
-          error?.response?.data?.message || "Something went wrong",
+        description: error?.response?.data?.message || "Something went wrong",
         status: "error",
         duration: 5000,
         isClosable: true,
         position: "top",
       });
+
       setLoading(false);
     }
   };

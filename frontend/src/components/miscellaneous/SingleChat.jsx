@@ -1,16 +1,15 @@
-import { Box, Text, IconButton, Spinner, Input, Field } from "@chakra-ui/react";
+import { Box, Text, IconButton, Spinner, Input, FormControl, useToast } from "@chakra-ui/react";
 import { ChatState } from "../../Context/ChatProvider";
-import { ArrowLeft } from "lucide-react";
+import { ArrowBackIcon } from "@chakra-ui/icons"; // Using Chakra icons to match your SideDrawer
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import io from "socket.io-client";
 import ScrollableChat from "./ScrollableChat";
-import { toaster } from "../ui/toaster-utils";
 
 const ENDPOINT = "http://localhost:5000";
 let socket, selectedChatCompare;
 
-const SingleChat = () => {
+const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const { user, selectedChat, setSelectedChat } = ChatState();
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -18,6 +17,34 @@ const SingleChat = () => {
     const [socketConnected, setSocketConnected] = useState(false);
     const [typing, setTyping] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const toast = useToast();
+
+    const fetchMessages = useCallback(async () => {
+        if (!selectedChat) return;
+
+        try {
+            setLoading(true);
+            const config = {
+                headers: { Authorization: `Bearer ${user.token}` },
+            };
+
+            const { data } = await axios.get(`/api/message/${selectedChat._id}`, config);
+            setMessages(data);
+            setLoading(false);
+
+            socket.emit("join_chat", selectedChat._id);
+        } catch (error) {
+            toast({
+                title: "Error Occurred!",
+                description: "Failed to Load the Messages",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+                position: "bottom",
+            });
+            setLoading(false);
+        }
+    }, [selectedChat, user, toast]);
 
     // 1. Initialize Socket Connection
     useEffect(() => {
@@ -38,14 +65,14 @@ const SingleChat = () => {
         selectedChatCompare = selectedChat;
     }, [selectedChat, fetchMessages]);
 
-    // 3. Listen for Incoming Messages (Using functional state to avoid stale closures)
+    // 3. Listen for Incoming Messages
     useEffect(() => {
         const messageListener = (newMessageReceived) => {
             if (
                 !selectedChatCompare ||
                 selectedChatCompare._id !== newMessageReceived.chat._id
             ) {
-                // Handle Notifications here if the chat isn't currently open
+                // Logic for notifications could go here
             } else {
                 setMessages((prevMessages) => [...prevMessages, newMessageReceived]);
             }
@@ -57,30 +84,6 @@ const SingleChat = () => {
             socket.off("message_received", messageListener);
         };
     }, []);
-
-    const fetchMessages = useCallback(async () => {
-        if (!selectedChat) return;
-
-        try {
-            setLoading(true);
-            const config = {
-                headers: { Authorization: `Bearer ${user.token}` },
-            };
-
-            const { data } = await axios.get(`/api/message/${selectedChat._id}`, config);
-            setMessages(data);
-            setLoading(false);
-
-            socket.emit("join_chat", selectedChat._id);
-        } catch {
-            toaster.create({
-                title: "Error Occurred!",
-                description: "Failed to Load the Messages",
-                type: "error",
-            });
-            setLoading(false);
-        }
-    }, [selectedChat, user]);
 
     const sendMessage = async (event) => {
         if (event.key === "Enter" && newMessage) {
@@ -100,11 +103,14 @@ const SingleChat = () => {
                 );
                 socket.emit("new_message", data);
                 setMessages([...messages, data]);
-            } catch {
-                toaster.create({
+            } catch (error) {
+                toast({
                     title: "Error Occurred!",
                     description: "Failed to send the Message",
-                    type: "error",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom",
                 });
             }
         }
@@ -136,71 +142,78 @@ const SingleChat = () => {
         <>
             {selectedChat ? (
                 <>
-                    <Text
-                        fontSize={{ base: "28px", md: "30px" }}
-                        pb={3}
-                        px={2}
-                        w="100%"
-                        display="flex"
-                        justifyContent={{ base: "space-between" }}
-                        alignItems="center"
-                        color="pink.500"
-                        fontWeight="bold"
-                    >
-                        <IconButton
-                            display={{ base: "flex", md: "none" }}
-                            variant="ghost"
-                            onClick={() => setSelectedChat("")}
-                        >
-                            <ArrowLeft />
-                        </IconButton>
-                        {!selectedChat.isGroupChat ? (
-                            <>{selectedChat.users[0]._id === user._id ? selectedChat.users[1].name : selectedChat.users[0].name}</>
-                        ) : (
-                            <>{selectedChat.chatName.toUpperCase()}</>
-                        )}
-                    </Text>
-
                     <Box
                         display="flex"
                         flexDir="column"
-                        justifyContent="flex-end"
-                        p={3}
-                        bg="#fdf2f4" // Piggy light pink background
                         w="100%"
                         h="100%"
-                        borderRadius="lg"
-                        overflowY="hidden"
                     >
-                        {loading ? (
-                            <Spinner size="xl" w={20} h={20} alignSelf="center" margin="auto" color="pink.400" />
-                        ) : (
-                            <div className="messages" style={{ display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
-                                <ScrollableChat messages={messages} />
-                            </div>
-                        )}
-
-                        {isTyping ? (
-                            <Text fontSize="xs" color="gray.500" fontStyle="italic" mt={1}>
-                                Piggy is typing... 🐷
-                            </Text>
-                        ) : null}
-
-                        <Field.Root mt={3} onKeyDown={sendMessage}>
-                            <Input
-                                variant="filled"
-                                bg="white"
-                                _focus={{ bg: "white", borderColor: "pink.300" }}
-                                placeholder="Oink a message..."
-                                onChange={typingHandler}
-                                value={newMessage}
+                        <Text
+                            fontSize={{ base: "28px", md: "30px" }}
+                            pb={3}
+                            px={2}
+                            w="100%"
+                            display="flex"
+                            justifyContent={{ base: "space-between" }}
+                            alignItems="center"
+                            color="pink.500"
+                            fontWeight="bold"
+                        >
+                            <IconButton
+                                display={{ base: "flex", md: "none" }}
+                                variant="ghost"
+                                icon={<ArrowBackIcon />}
+                                onClick={() => setSelectedChat("")}
                             />
-                        </Field.Root>
+                            {!selectedChat.isGroupChat ? (
+                                <>{selectedChat.users[0]._id === user._id ? selectedChat.users[1].name : selectedChat.users[0].name}</>
+                            ) : (
+                                <>{selectedChat.chatName.toUpperCase()}</>
+                            )}
+                        </Text>
+
+                        <Box
+                            display="flex"
+                            flexDir="column"
+                            justifyContent="flex-end"
+                            p={3}
+                            bg="#fdf2f4"
+                            w="100%"
+                            h="100%"
+                            borderRadius="lg"
+                            overflowY="hidden"
+                        >
+                            {loading ? (
+                                <Spinner size="xl" w={20} h={20} alignSelf="center" margin="auto" color="pink.400" />
+                            ) : (
+                                <div className="messages" style={{ display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" }}>
+                                    <ScrollableChat messages={messages} />
+                                </div>
+                            )}
+
+                            {isTyping ? (
+                                <Text fontSize="xs" color="gray.500" fontStyle="italic" mt={1} mb={1}>
+                                    Piggy is typing... 🐷
+                                </Text>
+                            ) : null}
+
+                            <FormControl onKeyDown={sendMessage} isRequired mt={3}>
+                                <Input
+                                    variant="filled"
+                                    bg="white"
+                                    _hover={{ bg: "white" }}
+                                    _focus={{ bg: "white", borderColor: "pink.300" }}
+                                    placeholder="Oink a message..."
+                                    onChange={typingHandler}
+                                    value={newMessage}
+                                />
+                            </FormControl>
+                        </Box>
                     </Box>
                 </>
             ) : (
                 <Box display="flex" alignItems="center" justifyContent="center" h="100%">
-                    <Text fontSize="3xl" color="pink.300">
+                    <Text fontSize="3xl" color="pink.300" textAlign="center">
                         Click on a pig to start oinking! 🐷
                     </Text>
                 </Box>

@@ -1,93 +1,210 @@
 import React, { useState } from "react";
-import {
-    Box, Button, Tooltip, Text, Menu, MenuButton, MenuList,
-    Avatar, MenuItem, MenuDivider, Drawer, DrawerOverlay,
-    DrawerContent, DrawerHeader, DrawerBody, Input, useToast, Spinner
-} from "@chakra-ui/react";
-import { SearchIcon, BellIcon, ChevronDownIcon } from "@chakra-ui/icons"; // You might need to install @chakra-ui/icons
-import { ChatState } from "../../Context/ChatProvider";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Tooltip,
+  Text,
+  Menu,
+  MenuButton,
+  MenuList,
+  Avatar,
+  MenuItem,
+  MenuDivider,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  Input,
+  useToast,
+  Spinner,
+} from "@chakra-ui/react";
+import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { ChatState } from "../../Context/ChatProvider";
+import ProfileModal from "./ProfileModal";
+import UserListItem from "../UserAvatar/UserListItem";
+import ChatLoading from "./ChatLoading"; // Optional: A skeleton loader component
 
 const SideDrawer = () => {
-    const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [isOpen, setIsOpen] = useState(false); // Manual drawer state
+  const [search, setSearch] = useState("");
+  const [searchResult, setSearchResult] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    const { user } = ChatState();
-    const navigate = useNavigate();
-    const toast = useToast();
+  const {
+    user,
+    setSelectedChat,
+    chats,
+    setChats,
+    notification,
+    setNotification,
+  } = ChatState();
 
-    const logoutHandler = () => {
-        localStorage.removeItem("userInfo");
-        navigate("/");
-    };
+  const navigate = useNavigate();
+  const toast = useToast();
 
-    const handleSearch = async () => {
-        if (!search) {
-            toast({ title: "Please enter something in search", status: "warning", duration: 3000, isClosable: true, position: "top-left" });
-            return;
-        }
+  const logoutHandler = () => {
+    localStorage.removeItem("userInfo");
+    navigate("/");
+  };
 
-        try {
-            setLoading(true);
-            const config = { headers: { Authorization: `Bearer ${user.token}` } };
-            await axios.get(`/api/user?search=${search}`, config);
-            setLoading(false);
+  const handleSearch = async () => {
+    if (!search) {
+      toast({
+        title: "Please enter something in search",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+        position: "top-left",
+      });
+      return;
+    }
 
-        } catch {
-            toast({ title: "Error Occured!", description: "Failed to Load the Search Results", status: "error", duration: 5000, isClosable: true, position: "bottom-left" });
-        }
-    };
+    try {
+      setLoading(true);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
 
-    return (
-        <>
-            <Box display="flex" justifyContent="space-between" alignItems="center" bg="white" w="100%" p="5px 10px 5px 10px" borderWidth="5px" borderColor="pink.100">
-                <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
-                    <Button variant="ghost" onClick={() => setIsOpen(true)}>
-                        <i className="fas fa-search"></i>
-                        <Text display={{ base: "none", md: "flex" }} px={4}>Search User</Text>
-                    </Button>
-                </Tooltip>
+      const { data } = await axios.get(`/api/user?search=${search}`, config);
 
-                <Text fontSize="2xl" fontWeight="bold" color="pink.500">OinkHub 🐷</Text>
+      setLoading(false);
+      setSearchResult(data);
+    } catch (error) {
+      toast({
+        title: "Error Occurred!",
+        description: "Failed to Load the Search Results",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+      setLoading(false);
+    }
+  };
 
-                <div>
-                    <Menu>
-                        <MenuButton p={1}>
-                            <BellIcon fontSize="2xl" m={1} />
-                        </MenuButton>
-                        {/* Notification list will go here later */}
-                    </Menu>
-                    <Menu>
-                        <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                            <Avatar size="sm" cursor="pointer" name={user.name} src={user.profilePic} />
-                        </MenuButton>
-                        <MenuList>
-                            <MenuItem>My Profile</MenuItem>
-                            <MenuDivider />
-                            <MenuItem onClick={logoutHandler}>Logout</MenuItem>
-                        </MenuList>
-                    </Menu>
-                </div>
+  const accessChat = async (userId) => {
+    try {
+      setLoadingChat(true);
+      const config = {
+        headers: {
+          "Content-type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      };
+
+      const { data } = await axios.post(`/api/chat`, { userId }, config);
+
+      // Check if the chat is already in our list; if not, add it
+      if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
+
+      setSelectedChat(data);
+      setLoadingChat(false);
+      setIsOpen(false); // Close the drawer
+    } catch (error) {
+      toast({
+        title: "Error fetching the chat",
+        description: error.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "bottom-left",
+      });
+      setLoadingChat(false);
+    }
+  };
+
+  return (
+    <>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        bg="white"
+        w="100%"
+        p="5px 10px 5px 10px"
+        borderWidth="5px"
+        borderColor="pink.100"
+      >
+        <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
+          <Button variant="ghost" onClick={() => setIsOpen(true)}>
+            <i className="fas fa-search"></i>
+            <Text display={{ base: "none", md: "flex" }} px={4}>
+              Search User
+            </Text>
+          </Button>
+        </Tooltip>
+
+        <Text fontSize="2xl" fontWeight="bold" color="pink.500">
+          OinkHub 🐷
+        </Text>
+
+        <div>
+          <Menu>
+            <MenuButton p={1}>
+              <BellIcon fontSize="2xl" m={1} />
+            </MenuButton>
+            {/* Notification logic will be added here later */}
+          </Menu>
+          <Menu>
+            <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+              <Avatar
+                size="sm"
+                cursor="pointer"
+                name={user.name}
+                src={user.profilePic}
+              />
+            </MenuButton>
+            <MenuList>
+              <ProfileModal user={user}>
+                <MenuItem>My Profile</MenuItem>
+              </ProfileModal>
+              <MenuDivider />
+              <MenuItem onClick={logoutHandler}>Logout</MenuItem>
+            </MenuList>
+          </Menu>
+        </div>
+      </Box>
+
+      <Drawer placement="left" onClose={() => setIsOpen(false)} isOpen={isOpen}>
+        <DrawerOverlay />
+        <DrawerContent>
+          <DrawerHeader borderBottomWidth="1px">Search Pigs</DrawerHeader>
+          <DrawerBody>
+            <Box display="flex" pb={2}>
+              <Input
+                placeholder="Search by name or email"
+                mr={2}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <Button onClick={handleSearch} isLoading={loading}>
+                Go
+              </Button>
             </Box>
 
-            <Drawer placement="left" onClose={() => setIsOpen(false)} isOpen={isOpen}>
-                <DrawerOverlay />
-                <DrawerContent>
-                    <DrawerHeader borderBottomWidth="1px">Search Pigs</DrawerHeader>
-                    <DrawerBody>
-                        <Box display="flex" pb={2}>
-                            <Input placeholder="Search by name or email" mr={2} value={search} onChange={(e) => setSearch(e.target.value)} />
-                            <Button onClick={handleSearch} isLoading={loading}>Go</Button>
-                        </Box>
-                        {/* Search results will be mapped here */}
-                    </DrawerBody>
-                </DrawerContent>
-            </Drawer>
-        </>
-    );
+            {loading ? (
+              <ChatLoading /> // Ensure you have a ChatLoading component or replace with <Spinner />
+            ) : (
+              searchResult?.map((searchedUser) => (
+                <UserListItem
+                  key={searchedUser._id}
+                  user={searchedUser}
+                  handleFunction={() => accessChat(searchedUser._id)}
+                />
+              ))
+            )}
+            {loadingChat && <Spinner ml="auto" display="flex" />}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
 };
 
 export default SideDrawer;
