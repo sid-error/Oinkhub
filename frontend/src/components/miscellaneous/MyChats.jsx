@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Box, Stack, Text, Button, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  Stack,
+  Text,
+  Button,
+  useToast,
+  Flex,
+  Badge,
+} from "@chakra-ui/react";
 import { AddIcon } from "@chakra-ui/icons";
 import axios from "axios";
 import { ChatState } from "../../Context/ChatProvider";
@@ -23,8 +31,8 @@ const MyChats = ({ fetchAgain }) => {
       setChats(data);
     } catch (error) {
       toast({
-        title: "Error Occured!",
-        description: "Failed to Load the chats",
+        title: "Error Occurred!",
+        description: "Failed to load chats",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -36,12 +44,11 @@ const MyChats = ({ fetchAgain }) => {
   useEffect(() => {
     setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
     fetchChats();
-    // eslint-disable-next-line
   }, [fetchAgain]);
 
-  // Helper function to get the name of the sender (not the logged in user)
   const getSender = (loggedUser, users) => {
-    return users[0]._id === loggedUser._id ? users[1].name : users[0].name;
+    if (!users || users.length < 2) return "Unknown";
+    return users[0]._id === loggedUser?._id ? users[1].name : users[0].name;
   };
 
   return (
@@ -49,68 +56,105 @@ const MyChats = ({ fetchAgain }) => {
       display={{ base: selectedChat ? "none" : "flex", md: "flex" }}
       flexDir="column"
       alignItems="center"
-      p={3}
+      p={4}
       bg="white"
       w={{ base: "100%", md: "31%" }}
-      borderRadius="lg"
+      borderRadius="2xl"
       borderWidth="1px"
+      borderColor="gray.100"
+      boxShadow="soft"
+      h="100%"
     >
-      <Box
-        pb={3}
-        px={3}
-        fontSize={{ base: "28px", md: "30px" }}
-        fontFamily="Work sans"
-        display="flex"
+      <Flex
+        pb={4}
+        px={1}
         w="100%"
         justifyContent="space-between"
         alignItems="center"
+        borderBottom="1px solid"
+        borderColor="gray.100"
       >
-        My Chats
+        <Text
+          fontSize="xl"
+          fontWeight="700"
+          fontFamily="heading"
+          color="gray.800"
+        >
+          My Chats
+        </Text>
         <GroupChatModal>
           <Button
-            display="flex"
-            fontSize={{ base: "17px", md: "10px", lg: "17px" }}
-            rightIcon={<AddIcon />}
-            colorScheme="pink"
+            leftIcon={<AddIcon />}
+            colorScheme="brand"
+            size="sm"
+            borderRadius="xl"
           >
-            New Group +
+            New Group
           </Button>
         </GroupChatModal>
-      </Box>
+      </Flex>
 
       <Box
         display="flex"
         flexDir="column"
-        p={3}
-        bg="#F8F8F8"
+        p={2}
         w="100%"
         h="100%"
-        borderRadius="lg"
-        overflowY="hidden"
+        overflowY="auto"
       >
         {chats ? (
-          <Stack overflowY="scroll">
+          <Stack spacing={2} overflowY="auto">
             {chats.map((chat) => (
               <Box
                 onClick={() => setSelectedChat(chat)}
                 cursor="pointer"
-                bg={selectedChat === chat ? "pink.500" : "#E8E8E8"}
-                color={selectedChat === chat ? "white" : "black"}
-                px={3}
-                py={2}
-                borderRadius="lg"
+                bg={selectedChat?._id === chat._id ? "brand.500" : "gray.50"}
+                color={selectedChat?._id === chat._id ? "white" : "gray.800"}
+                px={4}
+                py={3}
+                borderRadius="xl"
                 key={chat._id}
+                transition="all 0.2s"
+                _hover={{
+                  bg:
+                    selectedChat?._id === chat._id
+                      ? "brand.600"
+                      : "brand.50",
+                  transform: "translateX(2px)",
+                }}
+                border="1px solid"
+                borderColor={
+                  selectedChat?._id === chat._id
+                    ? "transparent"
+                    : "gray.100"
+                }
               >
-                <Text>
-                  {!chat.isGroupChat
-                    ? getSender(loggedUser, chat.users)
-                    : chat.chatName}
-                </Text>
+                <Flex alignItems="center" gap={2} mb={1}>
+                  <Text fontWeight="600" fontSize="sm" noOfLines={1}>
+                    {!chat.isGroupChat
+                      ? getSender(loggedUser, chat.users)
+                      : chat.chatName}
+                  </Text>
+                  {chat.isGroupChat && (
+                    <Badge
+                      size="sm"
+                      colorScheme={selectedChat?._id === chat._id ? "whiteAlpha" : "brand"}
+                      variant="subtle"
+                      fontSize="10px"
+                    >
+                      Group
+                    </Badge>
+                  )}
+                </Flex>
                 {chat.latestMessage && (
-                  <Text fontSize="xs">
-                    <b>{chat.latestMessage.sender.name} : </b>
-                    {chat.latestMessage.content.length > 50
-                      ? chat.latestMessage.content.substring(0, 51) + "..."
+                  <Text
+                    fontSize="xs"
+                    opacity={selectedChat?._id === chat._id ? 0.9 : 0.7}
+                    noOfLines={2}
+                  >
+                    <b>{chat.latestMessage?.sender?.name ?? "Someone"}: </b>
+                    {chat.latestMessage.content?.length > 40
+                      ? chat.latestMessage.content.substring(0, 40) + "..."
                       : chat.latestMessage.content}
                   </Text>
                 )}

@@ -1,7 +1,31 @@
 .App {
-    min-height: 100vh;
-    display: flex;
-    background-image: url("https://www.transparenttextures.com/patterns/cubes.png");
-    background-color: #fed7e2;
-    /* Light pink */
+  min-height: 100vh;
+  display: flex;
+  background: #000000;
+  color: white;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ec4d6a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d93d5c;
+}
+
+/* Message area scrollbar */
+.messages {
+  scrollbar-width: thin;
+  scrollbar-color: #ec4d6a #1a1a1a;
 }

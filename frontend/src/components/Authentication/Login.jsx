@@ -46,13 +46,10 @@ const Login = () => {
       );
 
       const userData = response.data;
-
-      console.log("LOGIN RESPONSE:", userData);
-
       localStorage.setItem("userInfo", JSON.stringify(userData));
 
       toast({
-        title: "Login successful",
+        title: "Welcome back!",
         status: "success",
         duration: 3000,
         isClosable: true,
@@ -62,10 +59,6 @@ const Login = () => {
       setLoading(false);
       navigate("/chats");
     } catch (error) {
-      console.log("LOGIN ERROR:", error);
-      console.log("RESPONSE:", error?.response?.data);
-      console.log("STATUS:", error?.response?.status);
-
       toast({
         title: "Error!",
         description: error?.response?.data?.message || "Something went wrong",
@@ -80,29 +73,51 @@ const Login = () => {
   };
 
   return (
-    <VStack spacing={4}>
-      <FormControl isInvalid={!email}>
-        <FormLabel>Email</FormLabel>
+    <VStack spacing={5}>
+      <FormControl>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Email
+        </FormLabel>
         <Input
           value={email}
-          placeholder="Enter your email"
+          placeholder="you@example.com"
           onChange={(e) => setEmail(e.target.value)}
+          size="lg"
+          bg="whiteAlpha.100"
+          border="2px solid"
+          borderColor="transparent"
+          _hover={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          _focus={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          color="white"
         />
       </FormControl>
 
-      <FormControl isInvalid={!password}>
-        <FormLabel>Password</FormLabel>
-
-        <InputGroup>
+      <FormControl>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Password
+        </FormLabel>
+        <InputGroup size="lg">
           <Input
             value={password}
             type={show ? "text" : "password"}
             placeholder="Enter your password"
             onChange={(e) => setPassword(e.target.value)}
+            bg="whiteAlpha.100"
+            border="2px solid"
+            borderColor="transparent"
+            _hover={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+            _focus={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+            color="white"
           />
-
-          <InputRightElement width="4.5rem">
-            <Button h="1.75rem" size="sm" onClick={() => setShow(!show)}>
+          <InputRightElement width="4.5rem" h="100%">
+            <Button
+              h="2rem"
+              size="sm"
+              variant="ghost"
+              onClick={() => setShow(!show)}
+              color="whiteAlpha.700"
+              _hover={{ bg: "whiteAlpha.100", color: "white" }}
+            >
               {show ? "Hide" : "Show"}
             </Button>
           </InputRightElement>
@@ -110,10 +125,15 @@ const Login = () => {
       </FormControl>
 
       <Button
-        colorScheme="pink"
+        bg="brand.500"
+        color="white"
+        _hover={{ bg: "brand.600" }}
         width="100%"
+        size="lg"
         onClick={submitHandler}
         isLoading={loading}
+        loadingText="Signing in..."
+        mt={2}
       >
         Login
       </Button>

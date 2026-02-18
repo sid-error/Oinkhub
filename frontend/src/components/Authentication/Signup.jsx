@@ -60,7 +60,7 @@ const Signup = () => {
       );
 
       toast({
-        title: "Registration successful",
+        title: "Account created!",
         status: "success",
         duration: 5000,
         isClosable: true,
@@ -84,58 +84,106 @@ const Signup = () => {
   };
 
   return (
-    <VStack spacing={4}>
-      <FormControl isRequired>
-        <FormLabel>Name</FormLabel>
+    <VStack spacing={5}>
+      <FormControl>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Name
+        </FormLabel>
         <Input
-          placeholder="Enter your name"
+          placeholder="Your name"
           onChange={(e) => setName(e.target.value)}
-        />
-      </FormControl>
-
-      <FormControl isRequired>
-        <FormLabel>Email Address</FormLabel>
-        <Input
-          type="email"
-          placeholder="Enter your email address"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </FormControl>
-
-      <FormControl isRequired>
-        <FormLabel>Password</FormLabel>
-        <Input
-          type="password"
-          placeholder="Enter password"
-          onChange={(e) => setPassword(e.target.value)}
-        />
-      </FormControl>
-
-      <FormControl isRequired>
-        <FormLabel>Confirm Password</FormLabel>
-        <Input
-          type="password"
-          placeholder="Confirm password"
-          onChange={(e) => setConfirmpassword(e.target.value)}
+          size="lg"
+          bg="whiteAlpha.100"
+          border="2px solid"
+          borderColor="transparent"
+          _hover={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          _focus={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          color="white"
         />
       </FormControl>
 
       <FormControl>
-        <FormLabel>Upload Profile Picture</FormLabel>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Email
+        </FormLabel>
+        <Input
+          type="email"
+          placeholder="you@example.com"
+          onChange={(e) => setEmail(e.target.value)}
+          size="lg"
+          bg="whiteAlpha.100"
+          border="2px solid"
+          borderColor="transparent"
+          _hover={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          _focus={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          color="white"
+        />
+      </FormControl>
+
+      <FormControl>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Password
+        </FormLabel>
+        <Input
+          type="password"
+          placeholder="Create a password"
+          onChange={(e) => setPassword(e.target.value)}
+          size="lg"
+          bg="whiteAlpha.100"
+          border="2px solid"
+          borderColor="transparent"
+          _hover={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          _focus={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          color="white"
+        />
+      </FormControl>
+
+      <FormControl>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Confirm Password
+        </FormLabel>
+        <Input
+          type="password"
+          placeholder="Confirm your password"
+          onChange={(e) => setConfirmpassword(e.target.value)}
+          size="lg"
+          bg="whiteAlpha.100"
+          border="2px solid"
+          borderColor="transparent"
+          _hover={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          _focus={{ borderColor: "brand.500", bg: "whiteAlpha.200" }}
+          color="white"
+        />
+      </FormControl>
+
+      <FormControl>
+        <FormLabel fontWeight="600" color="whiteAlpha.900">
+          Profile Picture
+        </FormLabel>
         <Input
           type="file"
-          p={1.5}
+          p={2}
           accept="image/*"
           onChange={(e) => setPic(e.target.files[0])}
+          size="lg"
+          bg="whiteAlpha.100"
+          border="2px dashed"
+          borderColor="whiteAlpha.300"
+          _hover={{ borderColor: "brand.500" }}
+          color="white"
         />
       </FormControl>
 
       <Button
-        colorScheme="pink"
+        bg="brand.500"
+        color="white"
+        _hover={{ bg: "brand.600" }}
         width="100%"
+        size="lg"
         mt={2}
         onClick={submitHandler}
         isLoading={loading}
+        loadingText="Creating account..."
       >
         Sign Up
       </Button>

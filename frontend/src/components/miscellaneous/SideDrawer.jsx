@@ -21,11 +21,12 @@ import {
   useToast,
   Spinner,
 } from "@chakra-ui/react";
-import { BellIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { BellIcon, ChevronDownIcon, SearchIcon } from "@chakra-ui/icons";
 import { ChatState } from "../../Context/ChatProvider";
 import ProfileModal from "./ProfileModal";
 import UserListItem from "../UserAvatar/UserListItem";
-import ChatLoading from "./ChatLoading"; // Optional: A skeleton loader component
+import ChatLoading from "./ChatLoading";
+import { getSender } from "../../config/ChatLogics";
 
 const SideDrawer = () => {
   const [search, setSearch] = useState("");
@@ -100,12 +101,11 @@ const SideDrawer = () => {
 
       const { data } = await axios.post(`/api/chat`, { userId }, config);
 
-      // Check if the chat is already in our list; if not, add it
       if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
 
       setSelectedChat(data);
       setLoadingChat(false);
-      setIsOpen(false); // Close the drawer
+      setIsOpen(false);
     } catch (error) {
       toast({
         title: "Error fetching the chat",
@@ -127,69 +127,186 @@ const SideDrawer = () => {
         alignItems="center"
         bg="white"
         w="100%"
-        p="5px 10px 5px 10px"
-        borderWidth="5px"
-        borderColor="pink.100"
+        px={{ base: 4, md: 6 }}
+        py={3}
+        borderBottom="1px solid"
+        borderColor="gray.100"
+        boxShadow="soft"
       >
-        <Tooltip label="Search Users to chat" hasArrow placement="bottom-end">
-          <Button variant="ghost" onClick={() => setIsOpen(true)}>
-            <i className="fas fa-search"></i>
-            <Text display={{ base: "none", md: "flex" }} px={4}>
-              Search User
+        <Tooltip label="Search users" hasArrow placement="bottom-end">
+          <Button
+            variant="ghost"
+            colorScheme="brand"
+            onClick={() => setIsOpen(true)}
+            leftIcon={<SearchIcon boxSize={5} />}
+          >
+            <Text display={{ base: "none", md: "flex" }} px={2}>
+              Search
             </Text>
           </Button>
         </Tooltip>
 
-        <Text fontSize="2xl" fontWeight="bold" color="pink.500">
-          OinkHub 🐷
+        <Text
+          fontSize="2xl"
+          fontWeight="bold"
+          fontFamily="heading"
+          bgGradient="linear(to-r, brand.600, brand.400)"
+          bgClip="text"
+          as="span"
+          display="flex"
+          alignItems="center"
+          gap={1}
+        >
+          OinkHub <Text as="span" fontSize="xl">🐷</Text>
         </Text>
 
-        <div>
+        <Box display="flex" alignItems="center" gap={1}>
           <Menu>
-            <MenuButton p={1}>
-              <BellIcon fontSize="2xl" m={1} />
+            <MenuButton
+              p={2}
+              position="relative"
+              borderRadius="full"
+              _hover={{ bg: "gray.50" }}
+            >
+              {notification.length > 0 && (
+                <Box
+                  position="absolute"
+                  top="0"
+                  right="0"
+                  bg="red.500"
+                  color="white"
+                  borderRadius="full"
+                  minW="18px"
+                  h="18px"
+                  fontSize="11px"
+                  fontWeight="bold"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  {notification.length}
+                </Box>
+              )}
+              <BellIcon fontSize="xl" />
             </MenuButton>
-            {/* Notification logic will be added here later */}
-          </Menu>
-          <Menu>
-            <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-              <Avatar
-                size="sm"
-                cursor="pointer"
-                name={user.name}
-                src={user.profilePic}
-              />
-            </MenuButton>
-            <MenuList>
-              <ProfileModal user={user}>
-                <MenuItem>My Profile</MenuItem>
-              </ProfileModal>
-              <MenuDivider />
-              <MenuItem onClick={logoutHandler}>Logout</MenuItem>
+            <MenuList
+              minW="260px"
+              border="1px solid"
+              borderColor="gray.100"
+              shadow="elevated"
+              borderRadius="xl"
+              py={2}
+            >
+              <Box px={3} py={2} color="gray.500" fontSize="sm" fontWeight="600">
+                Notifications
+              </Box>
+              {!notification.length && (
+                <Box px={4} py={4} color="gray.400" fontSize="sm">
+                  No new messages
+                </Box>
+              )}
+              {notification.map((notif) => (
+                <MenuItem
+                  key={notif._id}
+                  onClick={() => {
+                    setSelectedChat(notif.chat);
+                    setNotification(notification.filter((n) => n !== notif));
+                  }}
+                  _hover={{ bg: "brand.50" }}
+                  py={3}
+                >
+                  <Box>
+                    <Text fontSize="sm" fontWeight="500">
+                      {notif.chat.isGroupChat
+                        ? `New in ${notif.chat.chatName}`
+                        : `From ${getSender(user, notif.chat.users)}`}
+                    </Text>
+                  </Box>
+                </MenuItem>
+              ))}
             </MenuList>
           </Menu>
-        </div>
+
+          <Menu>
+            <MenuButton
+              as={Button}
+              bg="transparent"
+              _hover={{ bg: "transparent" }}
+              _active={{ bg: "transparent" }}
+              p={0}
+            >
+              <Avatar
+                size="md"
+                cursor="pointer"
+                name={user.name}
+                src={user.profilePic || user.pic}
+                border="2px solid"
+                borderColor="brand.500"
+              />
+            </MenuButton>
+            <MenuList
+              minW="180px"
+              border="1px solid"
+              borderColor="gray.100"
+              shadow="elevated"
+              borderRadius="xl"
+              py={2}
+            >
+              <ProfileModal user={user}>
+                <MenuItem _hover={{ bg: "brand.50" }}>My Profile</MenuItem>
+              </ProfileModal>
+              <MenuDivider borderColor="gray.100" />
+              <MenuItem
+                onClick={logoutHandler}
+                color="red.500"
+                _hover={{ bg: "red.50" }}
+              >
+                Logout
+              </MenuItem>
+            </MenuList>
+          </Menu>
+        </Box>
       </Box>
 
       <Drawer placement="left" onClose={() => setIsOpen(false)} isOpen={isOpen}>
-        <DrawerOverlay />
-        <DrawerContent>
-          <DrawerHeader borderBottomWidth="1px">Search Pigs</DrawerHeader>
+        <DrawerOverlay bg="blackAlpha.300" backdropFilter="blur(4px)" />
+        <DrawerContent
+          borderTopRightRadius="2xl"
+          borderBottomRightRadius="2xl"
+          maxW="400px"
+        >
+          <DrawerHeader
+            borderBottomWidth="1px"
+            borderColor="gray.100"
+            fontFamily="heading"
+            fontWeight="600"
+          >
+            Search users
+          </DrawerHeader>
           <DrawerBody>
-            <Box display="flex" pb={2}>
+            <Box display="flex" gap={2} pb={4}>
               <Input
-                placeholder="Search by name or email"
-                mr={2}
+                placeholder="Name or email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                borderRadius="xl"
+                border="2px solid"
+                borderColor="gray.100"
+                _focus={{ borderColor: "brand.400" }}
               />
-              <Button onClick={handleSearch} isLoading={loading}>
+              <Button
+                colorScheme="brand"
+                onClick={handleSearch}
+                isLoading={loading}
+                borderRadius="xl"
+              >
                 Go
               </Button>
             </Box>
 
             {loading ? (
-              <ChatLoading /> // Ensure you have a ChatLoading component or replace with <Spinner />
+              <ChatLoading />
             ) : (
               searchResult?.map((searchedUser) => (
                 <UserListItem
@@ -199,7 +316,15 @@ const SideDrawer = () => {
                 />
               ))
             )}
-            {loadingChat && <Spinner ml="auto" display="flex" />}
+            {loadingChat && (
+              <Spinner
+                size="md"
+                color="brand.500"
+                position="absolute"
+                bottom={4}
+                left="50%"
+              />
+            )}
           </DrawerBody>
         </DrawerContent>
       </Drawer>

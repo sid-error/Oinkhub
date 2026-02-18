@@ -10,24 +10,23 @@ const Chatpage = () => {
   const { user } = ChatState();
 
   return (
-    <div style={{ width: "100%" }}>
-      {/* 1. Add the SideDrawer here */}
+    <Box w="100%" minH="100vh" display="flex" flexDir="column">
       {user && <SideDrawer />}
-      
-      <Box 
-        display="flex" 
-        justifyContent="space-between" 
-        w="100%" 
-        h="91.5vh" 
-        p="10px"
+
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        w="100%"
+        h={{ base: "calc(100vh - 64px)", md: "calc(100vh - 72px)" }}
+        p={{ base: 2, md: 4 }}
+        gap={4}
       >
-        {/* 2. These components will now sit below the SideDrawer */}
         {user && <MyChats fetchAgain={fetchAgain} />}
         {user && (
           <ChatBox fetchAgain={fetchAgain} setFetchAgain={setFetchAgain} />
         )}
       </Box>
-    </div>
+    </Box>
   );
 };
 

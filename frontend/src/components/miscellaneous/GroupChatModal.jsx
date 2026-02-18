@@ -4,6 +4,7 @@ import {
   Input,
   VStack,
   Spinner,
+  Flex,
   useToast,
   Modal,
   ModalOverlay,
@@ -12,6 +13,7 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
 import { ChatState } from "../../Context/ChatProvider";
@@ -25,11 +27,9 @@ const GroupChatModal = ({ children }) => {
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [isOpen, setIsOpen] = useState(false);
 
   const toast = useToast();
-
   const { user, chats, setChats } = ChatState();
 
   const handleSearch = async (query) => {
@@ -42,7 +42,6 @@ const GroupChatModal = ({ children }) => {
 
     try {
       setLoading(true);
-
       const config = {
         headers: { Authorization: `Bearer ${user.token}` },
       };
@@ -84,10 +83,10 @@ const GroupChatModal = ({ children }) => {
   };
 
   const handleSubmit = async () => {
-    if (!groupChatName || selectedUsers.length === 0) {
+    if (!groupChatName || selectedUsers.length < 2) {
       toast({
         title: "Please fill all fields",
-        description: "Group name and at least 1 user is required",
+        description: "Group name and at least 2 users are required",
         status: "warning",
         duration: 4000,
         isClosable: true,
@@ -114,7 +113,7 @@ const GroupChatModal = ({ children }) => {
       setIsOpen(false);
 
       toast({
-        title: "New Group Chat Created!",
+        title: "Group created!",
         status: "success",
         duration: 4000,
         isClosable: true,
@@ -122,7 +121,7 @@ const GroupChatModal = ({ children }) => {
       });
     } catch (err) {
       toast({
-        title: "Failed to create the chat!",
+        title: "Failed to create group",
         description: err?.response?.data?.message || "Something went wrong",
         status: "error",
         duration: 4000,
@@ -132,47 +131,87 @@ const GroupChatModal = ({ children }) => {
     }
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setGroupChatName("");
+    setSelectedUsers([]);
+    setSearch("");
+    setSearchResult([]);
+  };
+
   return (
     <>
       <span onClick={() => setIsOpen(true)} style={{ display: "inline-block" }}>
         {children}
       </span>
 
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} isCentered>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader textAlign="center" fontSize="2xl">
-            Create Group Oink 🐷
+      <Modal isOpen={isOpen} onClose={handleClose} isCentered size="lg">
+        <ModalOverlay bg="blackAlpha.400" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="elevated">
+          <ModalHeader
+            textAlign="center"
+            fontFamily="heading"
+            fontWeight="600"
+            py={6}
+          >
+            Create group chat
           </ModalHeader>
 
-          <ModalCloseButton />
+          <ModalCloseButton top={4} right={4} />
 
-          <ModalBody>
-            <VStack spacing={4}>
-              <Input
-                placeholder="Chat Name"
-                value={groupChatName}
-                onChange={(e) => setGroupChatName(e.target.value)}
-              />
-
-              <Input
-                placeholder="Add Users eg: John, Jane"
-                value={search}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-
-              <Box w="100%" display="flex" flexWrap="wrap">
-                {selectedUsers.map((u) => (
-                  <UserBadgeItem
-                    key={u._id}
-                    user={u}
-                    handleFunction={() => handleDelete(u)}
-                  />
-                ))}
+          <ModalBody pb={6}>
+            <VStack spacing={5} align="stretch">
+              <Box>
+                <Text fontSize="sm" fontWeight="600" mb={2} color="gray.700">
+                  Group name
+                </Text>
+                <Input
+                  placeholder="e.g. Weekend squad"
+                  value={groupChatName}
+                  onChange={(e) => setGroupChatName(e.target.value)}
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="gray.100"
+                  _focus={{ borderColor: "brand.400" }}
+                />
               </Box>
 
+              <Box>
+                <Text fontSize="sm" fontWeight="600" mb={2} color="gray.700">
+                  Add members
+                </Text>
+                <Input
+                  placeholder="Search by name or email..."
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor="gray.100"
+                  _focus={{ borderColor: "brand.400" }}
+                />
+              </Box>
+
+              {selectedUsers.length > 0 && (
+                <Box w="100%">
+                  <Text fontSize="xs" fontWeight="600" mb={2} color="gray.500">
+                    Selected ({selectedUsers.length})
+                  </Text>
+                  <Box display="flex" flexWrap="wrap" gap={2}>
+                    {selectedUsers.map((u) => (
+                      <UserBadgeItem
+                        key={u._id}
+                        user={u}
+                        handleFunction={() => handleDelete(u)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
               {loading ? (
-                <Spinner />
+                <Flex justify="center" py={4}>
+                  <Spinner color="brand.500" />
+                </Flex>
               ) : (
                 searchResult?.slice(0, 4).map((u) => (
                   <UserListItem
@@ -185,9 +224,13 @@ const GroupChatModal = ({ children }) => {
             </VStack>
           </ModalBody>
 
-          <ModalFooter>
-            <Button colorScheme="pink" onClick={handleSubmit}>
-              Create Chat
+          <ModalFooter borderTop="1px solid" borderColor="gray.100">
+            <Button
+              colorScheme="brand"
+              onClick={handleSubmit}
+              borderRadius="xl"
+            >
+              Create group
             </Button>
           </ModalFooter>
         </ModalContent>
